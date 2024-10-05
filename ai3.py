@@ -5,7 +5,7 @@ import seaborn as sns
 
 # Загрузка данных из CSV-файла
 df = pd.read_csv('AI_csv.csv')
-print(df.head())
+print(df.head(15))
 print(df.columns)
 
 # Очистка данных: проверка и удаление пропусков
@@ -15,6 +15,14 @@ print(f"Удалено {initial_shape[0] - df.shape[0]} строк с пропу
 
 # Удаление пробелов в названиях колонок
 df.columns = df.columns.str.strip()
+
+# Преобразование колонки Overall Lect. в числовой формат
+df['Overall Lect.'] = pd.to_numeric(df['Overall Lect.'].astype(str).str.replace(' ', ''), errors='coerce')
+
+# Проверка на наличие пропусков после преобразования
+if df['Overall Lect.'].isnull().any():
+    print("Некоторые значения не могут быть преобразованы в число и будут удалены.")
+    df.dropna(subset=['Overall Lect.'], inplace=True)
 
 # Проверка наличия необходимых колонок и расчет процента посещаемости
 attended_col = 'Overall Lect.'
@@ -35,15 +43,15 @@ df['День недели'] = day_of_week_column[:len(df)]
 
 # Классификация успеваемости
 conditions = [
-    (df['Процент посещаемости'] >= 90),
-    (df['Процент посещаемости'] >= 75) & (df['Процент посещаемости'] < 90),
-    (df['Процент посещаемости'] < 75)
+    (df['Процент посещаемости'] >= 80),
+    (df['Процент посещаемости'] >= 60) & (df['Процент посещаемости'] < 80),
+    (df['Процент посещаемости'] < 60)
 ]
 choices = ['Отлично', 'Хорошо', 'Удовлетворительно']
 df['Успеваемость'] = np.select(conditions, choices, default='Неудовлетворительно')
 
 # Визуализация распределения посещаемости по дням недели
-plt.figure(figsize=(8, 6))
+plt.figure(figsize=(10, 6))
 sns.countplot(x='День недели', hue='Успеваемость', data=df, palette='viridis')
 plt.title('Распределение посещаемости по дням недели')
 plt.xticks(rotation=45)
@@ -51,17 +59,21 @@ plt.legend(title='Успеваемость')
 plt.show()
 
 # Визуализация временных рядов посещаемости студентов
-plt.figure(figsize=(8, 6))
+plt.figure(figsize=(10, 6))
 if 'Student Name' in df.columns:
-    df.set_index('Student Name')['Процент посещаемости'].plot()
-    plt.title('Процент посещаемости по студентам')
+    perfect_attendance = df[df['Процент посещаемости'] == 100]
+    sns.lineplot(x='Student Name', y='Процент посещаемости', data=perfect_attendance, marker='o')
+    plt.title('Процент посещаемости студентов с 100%')
     plt.xlabel('Студенты')
     plt.ylabel('Процент посещаемости')
+    plt.xticks(rotation=90)
+    plt.axhline(100, color='red', linestyle='--', label='100% посещаемость')
+    plt.legend()
     plt.show()
 
 # Группировка по успеваемости
 students_per_performance = df.groupby('Успеваемость').size()
-total_attendance_by_performance = df.groupby('Успеваемость')[attended_col].sum()
+total_attendance_by_performance = df.groupby('Успеваемость')['Overall Lect.'].sum()
 
 print("\nГруппировка по успеваемости:")
 print(students_per_performance)
