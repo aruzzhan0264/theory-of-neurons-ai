@@ -77,7 +77,7 @@ xor_model = keras.Sequential([
 xor_model.compile(optimizer='sgd', loss='mean_squared_error')
 
 # 11. XOR моделін оқыту
-xor_history = xor_model.fit(xor_data, xor_labels, epochs=100, verbose=1)
+xor_history = xor_model.fit(xor_data, xor_labels, epochs=50, verbose=1)
 
 # 12. XOR шығысын бағалау
 xor_loss = xor_model.evaluate(xor_data, xor_labels, verbose=0)
